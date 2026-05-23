@@ -1,4 +1,5 @@
 #include "Sensor/Sensor.h"
+#include "Display/Display.h"
 
 #define BUTTON_PIN
 
