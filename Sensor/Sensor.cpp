@@ -71,8 +71,7 @@ MAX30102_HeartRate()
 
   beatsPerMinute = 60 / (delta / 1000.0);
 
-  if (beatsPerMinute < 255 && beatsPerMinute > 20)
-  {
+  if (beatsPerMinute < 255 && beatsPerMinute > 20) {
     rates[rateSpot++] = (byte)beatsPerMinute; //Store this reading in the array
     rateSpot %= RATE_SIZE; //Wrap variable
 
@@ -102,7 +101,7 @@ MAX30102_SPO2()
   }
 
   int32_t dummyHeartRate;
-  init8_t dummyValidHeartRate;
+  int8_t dummyValidHeartRate;
 
   //calculate heart rate and SpO2 after first 100 samples (first 4 seconds of samples)
   maxim_heart_rate_and_oxygen_saturation(
