@@ -1,14 +1,14 @@
 #include "Sensor/Sensor.h"
 #include "Display/Display.h"
 
-#define BUTTON_PIN
+#define BUTTON_PIN REPLACE
 
-// Wifi configurations
-static const char* ssid = "";
-static const char* passphrase = "";
+// Wifi configuration
+#define WIFI_SSID REPLACE
+#define WIFi_PASS REPLACE
 
 // Google Spreadsheet API token
-static const char* GASAPI = "AKfycbzwmoYcl12LmyeP9f-hCk0m4aAbFIX8IOlb50QexMDfdS82uSJSWCOXzj61FcA51dH-nA";
+#define GAS_API REPLACE
 
 // Heart rate and SPO2 definition
 static int bpm;
@@ -25,10 +25,19 @@ setup()
     
     // Sensor MAX30102
     MAX30102_Setup();
-    Serial.println("Sensor detected");
+    Serial.println("Sensor ready");
 
-    // Button 
+    // Button
     pinMode(BUTTON_PIN, INPUT);
+    Serial.println("Button ready");
+
+    // Display ST7735
+    ST7735_Setup();
+    Serial.println("Display ready");
+
+    // Waiting for user
+    ST7735_Text_Center("Tekan tombol untuk memulai");
+    while (digitalRead(BUTTON_PIN) == LOW);
 }
 
 static void
@@ -41,4 +50,9 @@ loop()
     bpm = MAX30102_HeartRate();
     spo2 = MAX30102_SPO2();
 
+    // Debugging
+    Serial.print("BPM = ");
+    Serial.print(bpm);
+    Serial.print(" SPO2 = ");
+    Serial.println(spo2);
 }
