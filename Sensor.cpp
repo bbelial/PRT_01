@@ -14,15 +14,22 @@
 
 static MAX30105 particleSensor;
 
+static uint32_t irBuffer[100]; //infrared LED sensor data
+static uint32_t redBuffer[100];  //red LED sensor data
+
 // Heart rate
 static const byte RATE_SIZE = 10; //Increase this for more averaging. 4 is good.
 static byte rates[RATE_SIZE]; //Array of heart rates
 static byte rateSpot = 0;
 static long lastBeat = 0; //Time at which the last beat occurred
+static float beatsPerMinute = 0;
+static float filteredBPM = 0;
+static int beatAvg;
 
 // SPO2
-static uint32_t irBuffer[100]; //infrared LED sensor data
-static uint32_t redBuffer[100];  //red LED sensor data
+static int8_t validSPO2; //indicator to show if the SPO2 calculation is valid
+static int32_t spo2 = 0; //SPO2 value
+static float filteredSPO2 = 0;
 
 void
 MAX30102_Setup()
@@ -55,10 +62,6 @@ MAX30102_Setup()
 int
 MAX30102_HeartRate()
 {
-  float beatsPerMinute = 0;
-  float filteredBPM = 0;
-  int beatAvg;
-
   long irValue = particleSensor.getIR();
 
   if (!checkForBeat(irValue))
@@ -92,10 +95,6 @@ MAX30102_HeartRate()
 int32_t
 MAX30102_SPO2()
 {
-  int8_t validSPO2; //indicator to show if the SPO2 calculation is valid
-  int32_t spo2 = 0; //SPO2 value
-  float filteredSPO2 = 0;
-
   //read the first 100 samples, and determine the signal range
   for (byte i = 0 ; i < 100 ; i++) {
     while (particleSensor.available() == false) //do we have new data?
