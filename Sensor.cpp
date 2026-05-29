@@ -10,8 +10,6 @@
 
 #include "Sensor.h"
 
-#define MAX_BRIGHTNESS 255
-
 static MAX30105 particleSensor;
 
 static uint32_t irBuffer[100]; //infrared LED sensor data
@@ -37,7 +35,7 @@ MAX30102_Setup()
   // Initialize sensor
   if (!particleSensor.begin(Wire, I2C_SPEED_FAST)) {
     Serial.println(F("MAX30105 was not found. Please check wiring/power."));
-    while (1);
+    return;
   }
 
   byte ledBrightness = 50; //Options: 0=Off to 255=50mA
@@ -64,17 +62,17 @@ MAX30102_HeartRate()
 {
   long irValue = particleSensor.getIR();
 
-  if (!checkForBeat(irValue))
-    return 0;
-
-  if (irValue < 50000)
+  if (!checkForBeat(irValue) || irValue < 50000)
     return 0;
 
   //We sensed a beat!
   long delta = millis() - lastBeat;
   lastBeat = millis();
 
-  beatsPerMinute = 60 / (delta / 1000.0);
+  if (delta <= 0)
+    return 0;
+
+  beatsPerMinute = 60.0 / (delta / 1000.0);
 
   if (beatsPerMinute > 45 && beatsPerMinute < 130) {
     rates[rateSpot++] = (byte)beatsPerMinute; //Store this reading in the array
@@ -89,21 +87,33 @@ MAX30102_HeartRate()
     filteredBPM = (filteredBPM * 0.90) + (beatAvg * 0.10);
   }
 
-  return constrain(filteredBPM, 50, 130);
+  if (filteredBPM <= 0)
+    return 0;
+
+  return constrain((int)filteredBPM, 50, 130);
 }
   
 int32_t
 MAX30102_SPO2()
 {
-  //read the first 100 samples, and determine the signal range
-  for (byte i = 0 ; i < 100 ; i++) {
-    while (particleSensor.available() == false) //do we have new data?
-      particleSensor.check(); //Check the sensor for new data
+  static byte bufferIndex = 0;
+  static bool bufferFilled = false;
 
-    redBuffer[i] = particleSensor.getRed();
-    irBuffer[i] = particleSensor.getIR();
+  particleSensor.check(); //Check the sensor for new data
+  while (particleSensor.available()) {
+    redBuffer[bufferIndex] = particleSensor.getRed();
+    irBuffer[bufferIndex] = particleSensor.getIR();
     particleSensor.nextSample(); //We're finished with this sample so move to next sample
+
+    bufferIndex++;
+    if (bufferIndex >= 100) {
+      bufferIndex = 0;
+      bufferFilled = true;
+    }
   }
+
+  if (!bufferFilled)
+    return 0;
 
   int32_t dummyHeartRate;
   int8_t dummyValidHeartRate;
@@ -124,5 +134,8 @@ MAX30102_SPO2()
 
   filteredSPO2 = (filteredSPO2 * 0.92) + (spo2 * 0.08);
 
-  return constrain(filteredSPO2, 85, 100);
+  if (filteredSPO2 <= 0)
+    return 0;
+  
+  return constrain((int)filteredSPO2, 85, 100);
 }
