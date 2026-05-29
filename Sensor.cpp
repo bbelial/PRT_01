@@ -106,6 +106,9 @@ MAX30102_SPO2()
     particleSensor.nextSample(); //We're finished with this sample so move to next sample
   }
 
+  int32_t dummyHeartRate;
+  int8_t dummyValidHeartRate;
+
   //calculate heart rate and SpO2 after first 100 samples (first 4 seconds of samples)
   maxim_heart_rate_and_oxygen_saturation(
     irBuffer,
